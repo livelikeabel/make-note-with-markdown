@@ -1,0 +1,190 @@
+# AWS VPC IAM
+
+> *Virtual Private Cloud*(VPC)는 사용자의 AWS 계정 전용 가상 네트워크입니다. VPC는 AWS 클라우드에서 다른 가상 네트워크와 논리적으로 분리되어 있습니다. Amazon EC2 인스턴스와 같은 AWS 리소스를 VPC에서 실행할 수 있습니다. IP 주소 범위와 VPC 범위를 설정하고 서브넷을 추가하고 보안 그룹을 연결한 다음 라우팅 테이블을 구성합니다.
+
+
+
+만들기 전에 vpc 설정. 가장 먼저 해야한다. 네트워크를 설정하는 것이다.
+
+![image-20181108112013452](/Users/euisungko/Library/Application Support/typora-user-images/image-20181108112013452.png)
+
+간단하게 vpc 생성 마법사를 통해 만들자. (start VPC Wizard 버튼을 누른다.)
+
+> *VPC : virtual private cloud*
+
+
+
+
+
+
+
+single public network는 간단한거 만들 때 쓴다. 우리가 쓸 것은 **Public and Private Subnet**이다.
+
+![image-20181108112259285](/Users/euisungko/Library/Application Support/typora-user-images/image-20181108112259285.png)
+
+public subnet과 private subnet을 나눠준다. private subnet은 <u>외부와 접속을 할 때</u> **NAT 게이트웨이**를 이용해서 접속을 한다.
+
+> NAT(*Network Address Translation*): 외부 네트워크를 뚫어주는 용도
+
+
+
+
+
+
+
+### 연습용으로 스테이징1이라는 VPC환경을 만들어보기
+
+![image-20181108130616775](/Users/euisungko/Library/Application Support/typora-user-images/image-20181108130616775.png)
+
+> 첫번째 row의 IPv4 CIDR은 default로 각 리전마다 하나씩 준다.
+
+
+
+1. IPv4 CIDR의 안겹치는 것으로 만든다. `10.3.0.0/16` 으로 해보자 그리고 VPC name도 입력한다.
+
+![image-20181108130909270](/Users/euisungko/Library/Application Support/typora-user-images/image-20181108130909270.png)
+
+
+
+
+
+2. public subnet의 IP에 인터넷 게이트웨이와 엘라스틱 노드밸런서가 들어간다. 그리고 외부에서 바로 접속 가능한 ssh 전용 호스트를 넣는다.
+
+   > CIDR 구조를 보면, 전체 VPC CIDR에서 밑의 것으로 들어간다. 그 구조를 따라야 한다.
+
+![image-20181108131804912](/Users/euisungko/Library/Application Support/typora-user-images/image-20181108131804912.png)
+
+IPv4 CIDR block은 하나의 network를 구성한 것이고, 내부에서 public subnet과 private subnet을 구분한다.
+
+public subnet도 위와 같은 ip 주소를 갖는다. (위에서는 `10.3.0.0/24`) 이 내부에서 외부로 접속하기 위해서 인터넷 게이트를 달면 되는 것이다. 이 네트워크 자체가 외부와 연결되는 것은 아니다.
+
+
+
+
+
+3. Availability 선택하기
+
+   > 리전이 있고 리전 내부에서도 Availability Zone이 두개로 나뉘어 진다.(zone a, zone c가 나누어 짐)
+   >
+   > 예를들어, 한국의 서울 리전이 있고 a라는 데이터센터와 c라는 데이터센터가 있다. 그게 바로 availability zone이다. a가 다운되어도 c가 살아있다. (마법사에서는 1개 밖에 설정 못하는데, 생성을 완료한 다음에 추가하면 된다.)
+
+![image-20181108133810446](/Users/euisungko/Library/Application Support/typora-user-images/image-20181108133810446.png)
+
+
+
+
+
+4. NAT 게이트웨이 설정
+
+   > private 서브넷에서 쓴다. 예를들면, private 서브넷에 있는 인스턴스들이 업데이트를 해야하는 경우가 있다. (우분투 같은 것) 그런데 private에 있으면 <u>인터넷 접속이 안된다</u>. 업데이트를 할 수 있는 길이 없다. 그럴때  **NAT 게이트웨이를 통해서 업데이트 할 수 있다.** 
+
+   NAT 게이트웨이는 고유한 IP가 필요하다. 이 과정에서 미리 Elastic IP를 설정 해 주어야 한다.
+
+
+
+   4-1 VPC 대시보드의 Elastic IPs 에서 new Address 버튼을 눌러 생성한다.
+
+   ![image-20181108135244409](/Users/euisungko/Library/Application Support/typora-user-images/image-20181108135244409.png)
+
+
+
+![image-20181108135337566](/Users/euisungko/Library/Application Support/typora-user-images/image-20181108135337566.png)
+
+
+
+4-2 Elastic IP에 새로 생성한 Allocation ID를 입력한다.
+
+![image-20181108135519619](/Users/euisungko/Library/Application Support/typora-user-images/image-20181108135519619.png) 
+
+
+
+<u>그리고 create VPC 버튼을 누르면 VPC가 완성이 된다!</u>
+
+
+
+
+
+5. 추가 작업들
+
+Subnets를 보면, create Subnet 버튼이 있다.
+
+![image-20181108143430262](/Users/euisungko/Library/Application Support/typora-user-images/image-20181108143430262.png)
+
+
+
+Name tag는 최대한 자세하게 써주는 것이 좋다.
+
+![image-20181108143521004](/Users/euisungko/Library/Application Support/typora-user-images/image-20181108143521004.png)
+
+
+
+그리고,  아까 선택하지 못한 나머지 Availability Zone을 선택하고, CIDR block은 기존의 것들과 겹치지 않게 작성해준다.
+
+![image-20181108143617820](/Users/euisungko/Library/Application Support/typora-user-images/image-20181108143617820.png)
+
+추가하면 완료!
+
+
+
+
+
+### Route Table
+
+> 자기 네트워크(사진에서는 `10.3.0.0/16`)로 오는 request는 자기 네트워크 내에서 돌려주고
+>
+> 그 외(사진에서는 `0.0.0.0/0`)는 전부 인터넷 게이트웨이(사진에서는 `igw-fd24b794`)로 보내준다.
+
+![image-20181108145258742](/Users/euisungko/Library/Application Support/typora-user-images/image-20181108145258742.png)
+
+
+
+
+
+
+
+### IAM 만들기
+
+> 아마존 aws의 리소스에 접근하거나 수정할 수 있는 권리를 가진 유저를 만들어야 한다. 
+
+이 유저는 ec2가 쓰는 것이다. 서버가 쓰는 어카운트이다. 서버가 s3에 접근해야 해서 그 접근 권한이 있어야 한다. 접근 권한을 가진 어카운트를 만든 다음 할당해야 한다.
+
+정확한 용어는 role 이다. role을 만든 다음에, role을 ec2에 할당해 주면 ec2는 그 role을 가지고 s3에 접근할 수 도 있고, rds에도 접근할 수 있는, 그런 접근 권한을 가질 수 있다.
+
+
+
+- 서비스별로, 배포 환경별로 role을 만든다.
+
+  >  지역별이 아닌 이유는,  지역 자체도 aws 리소스 이다. 그래서 따로 두지 않는다.
+
+
+
+
+
+1. s3 버켓을 만든다.
+> 버켓 네임, region을 설정한다.
+
+![image-20181108151120735](/Users/euisungko/Library/Application Support/typora-user-images/image-20181108151120735.png)
+
+
+
+2. policy를 만든다
+
+   ![image-20181108151430111](/Users/euisungko/Library/Application Support/typora-user-images/image-20181108151430111.png)
+
+
+
+​	2-1 policy generator를 이용해서 손쉽게 만들 수 있다.
+
+![image-20181108151501325](/Users/euisungko/Library/Application Support/typora-user-images/image-20181108151501325.png)
+
+
+
+​	2-2 AWS Service는 S3를 선택하고, action은 선택할 수 있다. resource name도 입력한다
+
+![image-20181108151802283](/Users/euisungko/Library/Application Support/typora-user-images/image-20181108151802283.png)
+
+
+
+### 추가로 읽으면 좋을 아티클 
+
+- Amazon VPC란 무엇인가? https://docs.aws.amazon.com/ko_kr/vpc/latest/userguide/what-is-amazon-vpc.html
