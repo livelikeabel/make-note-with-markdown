@@ -18,7 +18,7 @@ const responseGoogle = (response) => {
  
 ReactDOM.render(
   <GoogleLogin
-    clientId="658977310896-knrl3gka66fldh83dao2rhgbblmd4un9.apps.googleusercontent.com"
+    clientId="354432310896-examplel3gka66fldh83dao2rhgbblmd4un9.apps.googleusercontent.com"
     buttonText="Login"
     onSuccess={responseGoogle}
     onFailure={responseGoogle}
@@ -26,8 +26,6 @@ ReactDOM.render(
   document.getElementById('googleButton')
 );
 ```
-
-> clientId는 어떻게 알 수 있지....?
 
 
 
